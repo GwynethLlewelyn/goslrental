@@ -37,7 +37,7 @@ func setUp(db *sql.DB) error {
 // main starts here.
 func main() {
 	ql.RegisterDriver()	// this should allow us to use the 'normal' SQL Go bindings to use QL.
-	db, err := sql.Open("ql", "db.ql")
+	db, err := sql.Open("ql", "goslrental.db")
 	defer db.Close()
 	if err != nil {
 		log.Fatalf("failed to open db: %s", err)
