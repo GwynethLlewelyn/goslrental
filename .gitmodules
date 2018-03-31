@@ -1,3 +1,6 @@
 [submodule "lib/startbootstrap-sb-admin-2"]
 	path = lib/startbootstrap-sb-admin-2
 	url = https://github.com/BlackrockDigital/startbootstrap-sb-admin-2.git
+[submodule "lib/nord"]
+	path = lib/nord
+	url = https://github.com/arcticicestudio/nord.git
