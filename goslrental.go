@@ -1,15 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"database/sql"
-	"log"
+	"fmt"
 	"github.com/cznic/ql"
+	"github.com/fsnotify/fsnotify"
 	"github.com/op/go-logging" // more complete package to log to different outputs; we start with file, syslog, and stderr; 
 	"github.com/spf13/viper" // to read config files
-	"runtime"
+	"gopkg.in/natefinch/lumberjack.v2" // rolling file logs
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"os/user"
 	"path/filepath"
+	"runtime"
 	"time"
+	"syscall"
 )
 
 var (
@@ -225,7 +232,7 @@ func main() {
 
 	// do some database tests. If it fails, it means the database is broken or corrupted and it's worthless
 	//  to run this application anyway!
-	Log.Info("Testing opening database connection at ", GoBotDSN, "\nPath to static files is:", PathToStaticFiles)
+	Log.Info("Testing opening database connection at ", GoSLRentalDSN, "\nPath to static files is:", PathToStaticFiles)
 
 	db, err := sql.Open(PDO_Prefix, GoSLRentalDSN)
 	defer db.Close()
@@ -292,4 +299,18 @@ func checkErr(err error) {
 		pc, file, line, ok := runtime.Caller(1)
 		Log.Error(filepath.Base(file), ":", line, ":", pc, ok, " - error:", err)
 	}
+}
+
+// expandPath expands the tilde as the user's home directory.
+//  found at http://stackoverflow.com/a/43578461/1035977
+func expandPath(path string) (string, error) {
+    if len(path) == 0 || path[0] != '~' {
+        return path, nil
+    }
+
+    usr, err := user.Current()
+    if err != nil {
+        return "", err
+    }
+    return filepath.Join(usr.HomeDir, path[1:]), nil
 }
