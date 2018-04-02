@@ -17,7 +17,7 @@ import (
 )
 
 // GoSLRentalTemplatesType expands on template.Template.
-//  need to expand it so I can add a few more methods here 
+//	need to expand it so I can add a few more methods here 
 type GoSLRentalTemplatesType struct{
 	template.Template
 }
@@ -26,16 +26,17 @@ type GoSLRentalTemplatesType struct{
 var GoSLRentalTemplates GoSLRentalTemplatesType
 
 // init parses all templates and puts it inside a (global) var.
-//  This is supposed to be called just once! (in func main())
+//	This is supposed to be called just once! (in func main())
 func (gt *GoSLRentalTemplatesType)init(globbedPath string) error {
 	temp, err := template.ParseGlob(globbedPath)
 	checkErr(err) // move out later, we just need it here to check what's wrong with the templates (20170706)
+	Log.Info("Path is (inside init):", globbedPath)
 	gt.Template = *temp;
 	return err
 }
 
 // GoSLRentalRenderer assembles the correct templates together and executes them.
-//  this is mostly to deal with code duplication 
+//	this is mostly to deal with code duplication 
 func (gt *GoSLRentalTemplatesType)GoSLRentalRenderer(w http.ResponseWriter, r *http.Request, tplName string, tplParams templateParameters) error {
 	thisUserName :=  getUserName(r)
 	
@@ -81,11 +82,11 @@ func (gt *GoSLRentalTemplatesType)GoSLRentalRenderer(w http.ResponseWriter, r *h
 }
 
 // Auxiliary functions for session handling
-//  see https://mschoebel.info/2014/03/09/snippet-golang-webapp-login-logout/ (20170603)
+//	see https://mschoebel.info/2014/03/09/snippet-golang-webapp-login-logout/ (20170603)
 
 var cookieHandler = securecookie.New(		// from gorilla/securecookie
-    securecookie.GenerateRandomKey(64),
-    securecookie.GenerateRandomKey(32))
+	securecookie.GenerateRandomKey(64),
+	securecookie.GenerateRandomKey(32))
 
 // setSession returns a new session cookie with an encoded username.
 func setSession(userName string, response http.ResponseWriter) {
@@ -151,8 +152,8 @@ func backofficeMain(w http.ResponseWriter, r *http.Request) {
 }
 
 // backofficeUserManagement deals with adding/removing application users. Just login(email) and password right now, no profiles, no email confirmations, etc. etc. etc.
-//  This is basically a stub for more complex user management, to be reused by other developments...
-//  I will not develop this further, except perhaps to link usernames to in-world avatars (may be useful)
+//	This is basically a stub for more complex user management, to be reused by other developments...
+//	I will not develop this further, except perhaps to link usernames to in-world avatars (may be useful)
 func backofficeUserManagement(w http.ResponseWriter, r *http.Request) {
 	checkSession(w, r)
 	tplParams := templateParameters{ "Title": "GoSLRental Administrator Panel - User Management",
@@ -177,19 +178,19 @@ func backofficeLogin(w http.ResponseWriter, r *http.Request) {
 		checkErr(err)
 	} else { // POST is assumed
 		r.ParseForm()
-        // logic part of logging in
-        email		:= r.Form.Get("email")
-        password	:= r.Form.Get("password")
-        
-        // Log.Debug("email:", email)
-        // Log.Debug("password:", password)
-        
-        if email == "" || password == "" { // should never happen, since the form checks this
-	        http.Redirect(w, r, URLPathPrefix + "/", 302)        
-        }
-        
-        // Check username on database
-        db, err := sql.Open(PDO_Prefix, GoSLRentalDSN)
+		// logic part of logging in
+		email		:= r.Form.Get("email")
+		password	:= r.Form.Get("password")
+		
+		// Log.Debug("email:", email)
+		// Log.Debug("password:", password)
+		
+		if email == "" || password == "" { // should never happen, since the form checks this
+			 http.Redirect(w, r, URLPathPrefix + "/", 302)		  
+		}
+		
+		// Check username on database
+		db, err := sql.Open(PDO_Prefix, GoSLRentalDSN)
 		checkErr(err)
 		
 		defer db.Close()
@@ -222,11 +223,11 @@ func backofficeLogin(w http.ResponseWriter, r *http.Request) {
 			}		
 		}
 		
-	    if authorised {
-	        // we need to set a cookie here
-	        setSession(email, w)
-	        // redirect to home
-	        http.Redirect(w, r, URLPathPrefix + "/admin", 302)
+		 if authorised {
+			 // we need to set a cookie here
+			 setSession(email, w)
+			 // redirect to home
+			 http.Redirect(w, r, URLPathPrefix + "/admin", 302)
 		} else {
 			// possibly we ought to give an error and then redirect, but I don't know how to do that (20170604)
 			http.Redirect(w, r, URLPathPrefix + "/", 302) // will ask for login again
@@ -242,8 +243,8 @@ func backofficeLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 // backofficeLSLRegisterObject creates a LSL script for registering cubes, using the defaults set by the user.
-//  This is better than using 'template' LSL scripts which people may fill in wrongly, this way at least
-//   we won't get errors about wrong signature PIN or hostnames etc.
+//	This is better than using 'template' LSL scripts which people may fill in wrongly, this way at least
+//	 we won't get errors about wrong signature PIN or hostnames etc.
 func backofficeLSLRegisterObject(w http.ResponseWriter, r *http.Request) {
 	checkSession(w, r)
 	tplParams := templateParameters{ "Title": "GoSLRental LSL Generator - register object.lsl",
@@ -254,7 +255,7 @@ func backofficeLSLRegisterObject(w http.ResponseWriter, r *http.Request) {
 			"LSL": "lsl-register-object", // this will change some formatting on the 'main' template (20170706)
 	}
 	// check if we have a frontend (it's configured on the config.toml file); if no, use the ServerPort
-	//  the 'frontend' will be nginx, Apache, etc. to cache replies from Go and serve static files from port 80 (20170706)
+	//	 the 'frontend' will be nginx, Apache, etc. to cache replies from Go and serve static files from port 80 (20170706)
 	if FrontEnd == "" {
 		tplParams["ServerPort"] = ServerPort
 	}

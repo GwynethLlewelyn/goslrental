@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/md5"
 	"database/sql"
 	"fmt"
 	"github.com/cznic/ql"
@@ -22,11 +23,17 @@ import (
 var (
 	// Default configurations, hopefully exported to other files and packages
 	// we probably should have a struct for this (or even several)
-	Host, GoSLRentalDSN, URLPathPrefix, PDO_Prefix, PathToStaticFiles,
-	ServerPort, FrontEnd, LSLSignaturePIN string
+	Host string = "localhost"
+	GoSLRentalDSN string = "goslrental.db" 
+	URLPathPrefix string
+	PDO_Prefix string = "ql"
+	PathToStaticFiles string = "~/go/src/goslrental"
+	ServerPort string = ":3333"
+	FrontEnd string
+	LSLSignaturePIN string = "6925"
 	logFileName string = "goslrental.log"
-	logMaxSize, logMaxBackups, logMaxAge int // configuration for the go-logging logger
-	logSeverityStderr, logSeverityFile, logSeveritySyslog logging.Level // more configuration for the go-logging logger
+	logMaxSize, logMaxBackups, logMaxAge int = 500, 3, 28 // configurations for the go-logging logger
+	logSeverityStderr, logSeverityFile, logSeveritySyslog logging.Level = logging.DEBUG, logging.DEBUG, logging.CRITICAL
 	Log = logging.MustGetLogger("goslrental")	// configuration for the go-logging logger, must be available everywhere
 	logFormat logging.Formatter	// must be initialised or all hell breaks loose
 )
@@ -54,6 +61,17 @@ func setUp(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+	_, err = tx.Exec(`CREATE TABLE IF NOT EXISTS Users (id INT, Email STRING, Password STRING);`)
+	if err != nil {
+		return err
+	}
+	// create one user to make tests
+	pwdmd5 := fmt.Sprintf("%x", md5.Sum([]byte("onetwothree")))
+	
+	_, err = tx.Exec(`INSERT INTO Users (id, Email, Password) VALUES (0, "gwyneth.llewelyn@gwynethllewelyn.net", "` + pwdmd5 + `");`)
+	if err != nil {
+		return err
+	}
 	if err = tx.Commit(); err != nil {
 		return err
 	}
@@ -68,97 +86,108 @@ func loadConfiguration() {
 	// Open our config file and extract relevant data from there
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {
-		fmt.Println("Error reading config file:", err)
-		return	// we might still get away with this!
+		fmt.Println(" Error:", err)
+		// this is a bit weird, but we need it just in case the path comes with a tilde '~' or similar shortcuts
+		//  requiring interpretation.
+		path, err := expandPath(PathToStaticFiles)
+		if err != nil {
+			fmt.Println("Error expanding path:", err)
+			path = ""	// we might get away with this as well
+		}
+		PathToStaticFiles = path
+		
+		// set this here or hell will break out later on 
+		logFormat = logging.MustStringFormatter(`%{color}%{time:2006/01/02 15:04:05.0} %{shortfile} - %{shortfunc} ▶ %{level:.4s}%{color:reset} %{message}`)
+
+	} else {
+		// Without these set, we cannot do anything
+		Host = viper.GetString("goslrental.Host"); fmt.Print(".")
+		viper.SetDefault("goslrental.URLPathPrefix", "") // empty by default, but you might add a 'main' website for information later
+		URLPathPrefix = viper.GetString("goslrental.URLPathPrefix"); fmt.Print(".")
+		GoSLRentalDSN = viper.GetString("goslrental.GoSLRentalDSN"); fmt.Print(".")
+		viper.SetDefault("PDO_Prefix", "ql") // for now, nothing else will work anyway...
+		PDO_Prefix = viper.GetString("goslrental.PDO_Prefix"); fmt.Print(".")
+		viper.SetDefault("goslrental.PathToStaticFiles", "~/go/src/goslrental")
+		path, err := expandPath(viper.GetString("goslrental.PathToStaticFiles")); fmt.Print(".")
+		if err != nil {
+			fmt.Println("Error expanding path:", err)
+			path = ""	// we might get away with this as well
+		}
+		PathToStaticFiles = path
+		viper.SetDefault("goslrental.ServerPort", ":3333")
+		ServerPort = viper.GetString("goslrental.ServerPort"); fmt.Print(".")
+		FrontEnd = viper.GetString("goslrental.FrontEnd"); fmt.Print(".")
+		viper.SetDefault("goslrental.LSLSignaturePIN", "9876") // better than no signature at all
+		LSLSignaturePIN = viper.GetString("opensim.LSLSignaturePIN"); fmt.Print(".")
+		// logging options
+		viper.SetDefault("log.FileName", "log/goslrental.log")
+		logFileName = viper.GetString("log.FileName"); fmt.Print(".")
+		viper.SetDefault("log.Format", `%{color}%{time:2006/01/02 15:04:05.0} %{shortfile} - %{shortfunc} ▶ %{level:.4s}%{color:reset} %{message}`)
+		logFormat = logging.MustStringFormatter(viper.GetString("log.Format")); fmt.Print(".")
+		viper.SetDefault("log.MaxSize", 500)
+		logMaxSize = viper.GetInt("log.MaxSize"); fmt.Print(".")
+		viper.SetDefault("log.MaxBackups", 3)
+		logMaxBackups = viper.GetInt("log.MaxBackups"); fmt.Print(".")
+		viper.SetDefault("log.MaxAge", 28)
+		logMaxAge = viper.GetInt("log.MaxAge"); fmt.Print(".")
+		viper.SetDefault("log.SeverityStderr", logging.DEBUG)
+		switch viper.GetString("log.SeverityStderr") {
+			case "CRITICAL":
+				logSeverityStderr = logging.CRITICAL
+		 	case "ERROR":
+				logSeverityStderr = logging.ERROR
+		 	case "WARNING":
+				logSeverityStderr = logging.WARNING
+		 	case "NOTICE":
+				logSeverityStderr = logging.NOTICE
+		 	case "INFO":
+				logSeverityStderr = logging.INFO
+		 	case "DEBUG":
+				logSeverityStderr = logging.DEBUG
+			// default case is handled directly by viper
+		}
+		fmt.Print(".")
+		viper.SetDefault("log.SeverityFile", logging.DEBUG)
+		switch viper.GetString("log.SeverityFile") {
+			case "CRITICAL":
+				logSeverityFile = logging.CRITICAL
+		 	case "ERROR":
+				logSeverityFile = logging.ERROR
+		 	case "WARNING":
+				logSeverityFile = logging.WARNING
+		 	case "NOTICE":
+				logSeverityFile = logging.NOTICE
+		 	case "INFO":
+				logSeverityFile = logging.INFO
+		 	case "DEBUG":
+				logSeverityFile = logging.DEBUG
+		}
+		fmt.Print(".")
+		viper.SetDefault("log.SeveritySyslog", logging.CRITICAL) // we don't want to swamp syslog with debugging messages!!
+		switch viper.GetString("log.SeveritySyslog") {
+			case "CRITICAL":
+				logSeveritySyslog = logging.CRITICAL
+		 	case "ERROR":
+				logSeveritySyslog = logging.ERROR
+		 	case "WARNING":
+				logSeveritySyslog = logging.WARNING
+		 	case "NOTICE":
+				logSeveritySyslog = logging.NOTICE
+		 	case "INFO":
+				logSeveritySyslog = logging.INFO
+		 	case "DEBUG":
+				logSeveritySyslog = logging.DEBUG
+		}
+		fmt.Print(".")
+		fmt.Println("read!")	// note that we might not have go-logging active as yet, so we use fmt
 	}
-	// Without these set, we cannot do anything
-	viper.SetDefault("goslrental.Host", "localhost") // to prevent bombing out with panics
-	Host = viper.GetString("goslrental.Host"); fmt.Print(".")
-	viper.SetDefault("goslrental.URLPathPrefix", "") // empty by default, but you might add a 'main' website for information later
-	URLPathPrefix = viper.GetString("goslrental.URLPathPrefix"); fmt.Print(".")
-	GoSLRentalDSN = viper.GetString("goslrental.GoSLRentalDSN"); fmt.Print(".")
-	viper.SetDefault("PDO_Prefix", "ql") // for now, nothing else will work anyway...
-	PDO_Prefix = viper.GetString("goslrental.PDO_Prefix"); fmt.Print(".")
-	viper.SetDefault("goslrental.PathToStaticFiles", "~/go/src/goslrental")
-	path, err := expandPath(viper.GetString("goslrental.PathToStaticFiles")); fmt.Print(".")
-	if err != nil {
-		fmt.Println("Error expanding path:", err)
-		path = ""	// we might get away with this as well
-	}
-	PathToStaticFiles = path
-	viper.SetDefault("goslrental.ServerPort", ":3333")
-	ServerPort = viper.GetString("goslrental.ServerPort"); fmt.Print(".")
-	FrontEnd = viper.GetString("goslrental.FrontEnd"); fmt.Print(".")
-	viper.SetDefault("goslrental.LSLSignaturePIN", "9876") // better than no signature at all
-	LSLSignaturePIN = viper.GetString("opensim.LSLSignaturePIN"); fmt.Print(".")
-	// logging options
-	viper.SetDefault("log.FileName", "log/goslrental.log")
-	logFileName = viper.GetString("log.FileName"); fmt.Print(".")
-	viper.SetDefault("log.Format", `%{color}%{time:2006/01/02 15:04:05.0} %{shortfile} - %{shortfunc} ▶ %{level:.4s}%{color:reset} %{message}`)
-	logFormat = logging.MustStringFormatter(viper.GetString("log.Format")); fmt.Print(".")
-	viper.SetDefault("log.MaxSize", 500)
-	logMaxSize = viper.GetInt("log.MaxSize"); fmt.Print(".")
-	viper.SetDefault("log.MaxBackups", 3)
-	logMaxBackups = viper.GetInt("log.MaxBackups"); fmt.Print(".")
-	viper.SetDefault("log.MaxAge", 28)
-	logMaxAge = viper.GetInt("log.MaxAge"); fmt.Print(".")
-	viper.SetDefault("log.SeverityStderr", logging.DEBUG)
-	switch viper.GetString("log.SeverityStderr") {
-		case "CRITICAL":
-			logSeverityStderr = logging.CRITICAL
-    	case "ERROR":
-			logSeverityStderr = logging.ERROR
-    	case "WARNING":
-			logSeverityStderr = logging.WARNING
-    	case "NOTICE":
-			logSeverityStderr = logging.NOTICE
-    	case "INFO":
-			logSeverityStderr = logging.INFO
-    	case "DEBUG":
-			logSeverityStderr = logging.DEBUG
-		// default case is handled directly by viper
-	}
-	fmt.Print(".")
-	viper.SetDefault("log.SeverityFile", logging.DEBUG)
-	switch viper.GetString("log.SeverityFile") {
-		case "CRITICAL":
-			logSeverityFile = logging.CRITICAL
-    	case "ERROR":
-			logSeverityFile = logging.ERROR
-    	case "WARNING":
-			logSeverityFile = logging.WARNING
-    	case "NOTICE":
-			logSeverityFile = logging.NOTICE
-    	case "INFO":
-			logSeverityFile = logging.INFO
-    	case "DEBUG":
-			logSeverityFile = logging.DEBUG
-	}
-	fmt.Print(".")
-	viper.SetDefault("log.SeveritySyslog", logging.CRITICAL) // we don't want to swamp syslog with debugging messages!!
-	switch viper.GetString("log.SeveritySyslog") {
-		case "CRITICAL":
-			logSeveritySyslog = logging.CRITICAL
-    	case "ERROR":
-			logSeveritySyslog = logging.ERROR
-    	case "WARNING":
-			logSeveritySyslog = logging.WARNING
-    	case "NOTICE":
-			logSeveritySyslog = logging.NOTICE
-    	case "INFO":
-			logSeveritySyslog = logging.INFO
-    	case "DEBUG":
-			logSeveritySyslog = logging.DEBUG
-	}
-	fmt.Print(".")
-	fmt.Println("read!")	// note that we might not have go-logging active as yet, so we use fmt
 	
 	// Setup the lumberjack rotating logger. This is because we need it for the go-logging logger when writing to files. (20170813)
 	rotatingLogger := &lumberjack.Logger{
-	    Filename:   logFileName,	// this is an option set on the config.yaml file, eventually the others will be so, too.
-	    MaxSize:    logMaxSize, // megabytes
-	    MaxBackups: logMaxBackups,
-	    MaxAge:     logMaxAge, //days
+		 Filename:	 logFileName,	// this is an option set on the config.yaml file, eventually the others will be so, too.
+		 MaxSize:	 logMaxSize, // megabytes
+		 MaxBackups: logMaxBackups,
+		 MaxAge:	 logMaxAge, //days
 	}
 	// Setup the go-logging Logger. (20170812) We have three loggers: one to stderr, one to a logfile, one to syslog for critical stuff. (20170813
 	backendStderr	:= logging.NewLogBackend(os.Stderr, "", 0)
@@ -181,6 +210,7 @@ func loadConfiguration() {
 	// Set the backends to be used. Logging should commence now.
 	logging.SetBackend(backendStderrLeveled, backendFileLeveled, backendSyslogLeveled)
 	fmt.Println("Logging set up.")
+	Log.Debug("Logging set up.")
 }
 
 // main starts here.
@@ -194,8 +224,8 @@ func main() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml") // just to make sure; it's the same format as OpenSimulator (or MySQL) config files
 	viper.AddConfigPath("$HOME/go/src/goslrental/") // that's how I have it
-	viper.AddConfigPath("$HOME/go/src/github.com/GwynethLlewelyn/goslrental/") // that's how you'll have it
-	viper.AddConfigPath(".")               // optionally look for config in the working directory
+	viper.AddConfigPath("$HOME/go/src/git.gwynethllewelyn.net/GwynethLlewelyn/goslrental/") // that's how you'll have it
+	viper.AddConfigPath(".")				// optionally look for config in the working directory
 
 	loadConfiguration() // this gets loaded always, on the first time it runs
 	viper.WatchConfig() // if the config file is changed, this is supposed to reload it (20170811)
@@ -215,23 +245,27 @@ func main() {
 	// goroutine which listens to signals and calls the loadConfiguration() function if someone sends us a HUP
 	go func() {
 		for {
-	        sig := <-sigs
-	        Log.Notice("Got signal", sig)
-	        switch sig {
-		        case syscall.SIGUSR1:
-		        case syscall.SIGUSR2:
-		        case syscall.SIGHUP:
-		        case syscall.SIGCONT:
+			 sig := <-sigs
+			 Log.Notice("Got signal", sig)
+			 switch sig {
+				  case syscall.SIGUSR1:
+				  case syscall.SIGUSR2:
+				  case syscall.SIGHUP:
+				  case syscall.SIGCONT:
 				default:
-		        	Log.Warning("Unknown UNIX signal", sig, "caught!! Ignoring...")
-	        }
-        }
-    }()
+				  	Log.Warning("Unknown UNIX signal", sig, "caught!! Ignoring...")
+			 }
+		}
+	}()
 	
 	ql.RegisterDriver()	// this should allow us to use the 'normal' SQL Go bindings to use QL.
 
+	if (Log == nil) {
+		log.Fatal("Could not set up alternative logger for some reason...")
+	}
 	// do some database tests. If it fails, it means the database is broken or corrupted and it's worthless
-	//  to run this application anyway!
+	//	 to run this application anyway!
+	fmt.Printf("GoSLRentalDSN: '%v' PathToStaticFiles: '%v'\n", GoSLRentalDSN, PathToStaticFiles)
 	Log.Info("Testing opening database connection at ", GoSLRentalDSN, "\nPath to static files is:", PathToStaticFiles)
 
 	db, err := sql.Open(PDO_Prefix, GoSLRentalDSN)
@@ -265,11 +299,27 @@ func main() {
 	err = tx.Commit()	
 	checkErr(err)
 	
-		// Now prepare the web interface
+	// Now prepare the web interface
+
+	// Check if path makes sense:
+	
+	Log.Info("Path is:", PathToStaticFiles + "/templates/*.tpl")
 
 	// Load all templates
 	err = GoSLRentalTemplates.init(PathToStaticFiles + "/templates/*.tpl")
 	checkErr(err) // abort if templates are not found
+	
+	// Static files. This should be handled directly by nginx, but we include it here
+	//  for a standalone version...
+	fslib := http.FileServer(http.Dir(PathToStaticFiles + "/lib"))
+	http.Handle(URLPathPrefix + "/lib/", http.StripPrefix(URLPathPrefix + "/lib/", fslib))
+
+	templatelib := http.FileServer(http.Dir(PathToStaticFiles + "/templates"))
+	http.Handle(URLPathPrefix + "/templates/",
+		http.StripPrefix(URLPathPrefix + "/templates/", templatelib)) // not sure if this is needed
+
+	http.HandleFunc(URLPathPrefix + "/admin/logout/",					backofficeLogout)
+	http.HandleFunc(URLPathPrefix + "/admin/login/",					backofficeLogin) // probably not necessary
 
 	http.HandleFunc(URLPathPrefix + "/admin/user-management/",			backofficeUserManagement)
 	
@@ -279,8 +329,8 @@ func main() {
 	http.HandleFunc(URLPathPrefix + "/admin/",							backofficeMain)
 	http.HandleFunc(URLPathPrefix + "/",								backofficeLogin) // if not auth, then get auth
 
-    err = http.ListenAndServe(ServerPort, nil) // set listen port
-    checkErr(err) // if it can't listen to all the above, then it has to abort anyway
+	err = http.ListenAndServe(ServerPort, nil) // set listen port
+	checkErr(err) // if it can't listen to all the above, then it has to abort anyway
 
 }
 
@@ -293,7 +343,7 @@ func checkErrPanic(err error) {
 }
 
 // checkErr checks if there is an error, and if yes, it logs it out and continues.
-//  this is for 'normal' situations when we want to get a log if something goes wrong but do not need to panic
+//	this is for 'normal' situations when we want to get a log if something goes wrong but do not need to panic
 func checkErr(err error) {
 	if err != nil {
 		pc, file, line, ok := runtime.Caller(1)
@@ -302,15 +352,15 @@ func checkErr(err error) {
 }
 
 // expandPath expands the tilde as the user's home directory.
-//  found at http://stackoverflow.com/a/43578461/1035977
+//	found at http://stackoverflow.com/a/43578461/1035977
 func expandPath(path string) (string, error) {
-    if len(path) == 0 || path[0] != '~' {
-        return path, nil
-    }
+	if len(path) == 0 || path[0] != '~' {
+		return path, nil
+	}
 
-    usr, err := user.Current()
-    if err != nil {
-        return "", err
-    }
-    return filepath.Join(usr.HomeDir, path[1:]), nil
+	usr, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(usr.HomeDir, path[1:]), nil
 }
