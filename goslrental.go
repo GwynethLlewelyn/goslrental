@@ -51,7 +51,7 @@ func setUp(db *sql.DB) error {
 	}
 	_, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS note (
-	  id INT 
+	  id INT NOT NULL
 	  ,title STRING
 	  ,body STRING
 	  ,created_at STRING
@@ -61,17 +61,18 @@ func setUp(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(`CREATE TABLE IF NOT EXISTS Users (id INT, Email STRING, Password STRING);`)
+	_, err = tx.Exec(`CREATE TABLE IF NOT EXISTS Users (Email STRING NOT NULL, Password STRING);
+	CREATE UNIQUE INDEX IF NOT EXISTS UsersEmail ON Users (Email);`)
 	if err != nil {
 		return err
 	}
-	// create one user to make tests
+	// create one user to make tests, encode password as MD5
 	pwdmd5 := fmt.Sprintf("%x", md5.Sum([]byte("onetwothree")))
 	
-	_, err = tx.Exec(`INSERT INTO Users (id, Email, Password) VALUES (0, "gwyneth.llewelyn@gwynethllewelyn.net", "` + pwdmd5 + `");`)
-	if err != nil {
-		return err
-	}
+	_, err = tx.Exec(`INSERT INTO Users (Email, Password) VALUES ("gwyneth.llewelyn@gwynethllewelyn.net", "` + pwdmd5 + `");`)
+	//if err != nil {
+	//	return err
+	//} // should fail if already inserted
 	if err = tx.Commit(); err != nil {
 		return err
 	}
@@ -303,7 +304,7 @@ func main() {
 
 	// Check if path makes sense:
 	
-	Log.Info("Path is:", PathToStaticFiles + "/templates/*.tpl")
+	Log.Info("Path is:", PathToStaticFiles + "/templates/*.tpl", "URL Path Prefix is:", URLPathPrefix, "Path to static files is:", PathToStaticFiles)
 
 	// Load all templates
 	err = GoSLRentalTemplates.init(PathToStaticFiles + "/templates/*.tpl")

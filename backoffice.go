@@ -30,7 +30,7 @@ var GoSLRentalTemplates GoSLRentalTemplatesType
 func (gt *GoSLRentalTemplatesType)init(globbedPath string) error {
 	temp, err := template.ParseGlob(globbedPath)
 	checkErr(err) // move out later, we just need it here to check what's wrong with the templates (20170706)
-	Log.Info("Path is (inside init):", globbedPath)
+	//Log.Info("Path is (inside init):", globbedPath)
 	gt.Template = *temp;
 	return err
 }
@@ -43,6 +43,9 @@ func (gt *GoSLRentalTemplatesType)GoSLRentalRenderer(w http.ResponseWriter, r *h
 	// add cookie to all templates
 	tplParams["SetCookie"] = thisUserName
 
+	// Add URLPathPrefix
+	tplParams["URLPathPrefix"] = URLPathPrefix
+	
 	// add Gravatar to templates (note that all logins are supposed to be emails)
 	
 	// calculate hash for the Gravatar hovercard
