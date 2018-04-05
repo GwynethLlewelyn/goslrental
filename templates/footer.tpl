@@ -12,10 +12,11 @@
     <!-- Metis Menu Plugin JavaScript -->
     <script src="{{.URLPathPrefix}}/lib/startbootstrap-sb-admin-2/vendor/metisMenu/metisMenu.min.js"></script>
 
-    <!-- Morris Charts JavaScript -->
+    <!-- Morris Charts JavaScript 
     <script src="{{.URLPathPrefix}}/lib/startbootstrap-sb-admin-2/vendor/raphael/raphael.min.js"></script>
     <script src="{{.URLPathPrefix}}/lib/startbootstrap-sb-admin-2/vendor/morrisjs/morris.min.js"></script>
     <script src="{{.URLPathPrefix}}/lib/startbootstrap-sb-admin-2/data/morris-data.js"></script>
+	-->
 
     <!-- Custom Theme JavaScript -->
     <script src="{{.URLPathPrefix}}/lib/startbootstrap-sb-admin-2/dist/js/sb-admin-2.js"></script>

@@ -24,8 +24,9 @@
 	<!-- Custom CSS -->
 	<link href="{{.URLPathPrefix}}/lib/startbootstrap-sb-admin-2/dist/css/sb-admin-2.css" rel="stylesheet">
 
-	<!-- Morris Charts CSS -->
+	<!-- Morris Charts CSS 
 	<link href="{{.URLPathPrefix}}/lib/startbootstrap-sb-admin-2/vendor/morrisjs/morris.css" rel="stylesheet">
+	-->
 
 	<!-- Custom Fonts -->
 	<link href="{{.URLPathPrefix}}/lib/startbootstrap-sb-admin-2/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
