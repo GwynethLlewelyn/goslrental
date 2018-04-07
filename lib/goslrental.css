@@ -1,9 +1,11 @@
+
 #page-wrapper {
-	margin-left: 0px;
-	margin-top: 50px; /* this is because of the fixed menu */
-	background-color: #f8f8f8; /* this should be already set but for some reason reverts to white?! */
-	position: relative;
+/*	margin-left: 0px; */
+	margin-top: 50px;  /* this is because of the fixed menu */
+/*	background-color: #f8f8f8; */ /* this should be already set but for some reason reverts to white?! */
+/*	position: relative; */
 }
+
 
 #map {
 	width: 100%;
