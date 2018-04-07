@@ -21,6 +21,9 @@
 	<!-- MetisMenu CSS -->
 	<link href="{{.URLPathPrefix}}/lib/startbootstrap-sb-admin-2/vendor/metisMenu/metisMenu.min.css" rel="stylesheet">
 
+	<!-- Nord colour palette CSS -->
+	<link href="{{.URLPathPrefix}}/lib/nord/src/nord.css" rel="stylesheet">
+
 	<!-- Custom CSS -->
 	<link href="{{.URLPathPrefix}}/lib/startbootstrap-sb-admin-2/dist/css/sb-admin-2.css" rel="stylesheet">
 
