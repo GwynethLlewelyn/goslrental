@@ -18,7 +18,8 @@ a {
 		border-left-color: var(--nord7);
 	}
 }
-.nav>li>a:focus, .nav>li>a:hover {
+.nav>li>a:focus, .nav>li>a:hover, .dropdown-menu>li>a:focus, .dropdown-menu>li>a:hover {
+	color: var(--nord3);
     background-color: var(--nord4);
 }
 .dropdown-menu>li>a {
