@@ -1,10 +1,11 @@
-
 body {
 	background-color: var(--nord3);
 	color: var(--nord8);
 	font-family: 'Cantarell', sans-serif;	
 }
-
+a {
+	color: var(--nord7);
+}
 #page-wrapper {
 /*	margin-left: 0px; */
 	margin-top: 50px;  /* this is because of the fixed menu */
@@ -17,13 +18,32 @@ body {
 		border-left-color: var(--nord7);
 	}
 }
+.nav>li>a:focus, .nav>li>a:hover {
+    background-color: var(--nord4);
+}
+.dropdown-menu>li>a {
+	color: var(--nord7);
+}
+.dropdown-menu, .btn-default {
+	background-color: var(--nord1);
+	color: var(--nord7);
+}
+.form-control {
+	background-color: var(--nord1);
+	border-left-color: var(--nord7);
+	color: var(--nord8);
+}
+.navbar-default {
+    background-color: var(--nord1);
+    border-color: var(--nord7);
+}
 .sidebar ul li {
   border-bottom-color: var(--nord7);
 }
 .sidebar ul li a.active {
+	color: var(--nord3);
 	background-color: var(--nord8);
 }
-
 .btn-primary.btn-outline {
   color: var(--nord7);
 }
@@ -45,16 +65,14 @@ body {
 .btn-warning.btn-outline:hover,
 .btn-danger.btn-outline:hover {
   color: var(--nord6);
+  background-color: var(--nord8);
 }
-
 .chat li {
 	border-bottom-color: var(--nord4);
 }
-
 table.dataTable thead .sorting:after {
 	color: var(--nord9);
 }
-
 .show-grid [class^="col-"] {
 	background-color: var(--nord8) !important;
 }
