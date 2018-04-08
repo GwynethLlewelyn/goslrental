@@ -1,16 +1,82 @@
 
+body {
+	background-color: var(--nord3);
+	color: var(--nord8);
+	font-family: 'Cantarell', sans-serif;	
+}
+
 #page-wrapper {
 /*	margin-left: 0px; */
 	margin-top: 50px;  /* this is because of the fixed menu */
 /*	background-color: #f8f8f8; */ /* this should be already set but for some reason reverts to white?! */
 /*	position: relative; */
+	background-color: var(--nord6);
+}
+@media (min-width: 768px) {
+	#page-wrapper {
+		border-left-color: var(--nord7);
+	}
+}
+.sidebar ul li {
+  border-bottom-color: var(--nord7);
+}
+.sidebar ul li a.active {
+	background-color: var(--nord8);
 }
 
+.btn-primary.btn-outline {
+  color: var(--nord7);
+}
+.btn-success.btn-outline {
+  color: var(--nord15);
+}
+.btn-info.btn-outline {
+  color: var(--nord8);
+}
+.btn-warning.btn-outline {
+  color: var(--nord13);
+}
+.btn-danger.btn-outline {
+  color: var(--nord11);
+}
+.btn-primary.btn-outline:hover,
+.btn-success.btn-outline:hover,
+.btn-info.btn-outline:hover,
+.btn-warning.btn-outline:hover,
+.btn-danger.btn-outline:hover {
+  color: var(--nord6);
+}
+
+.chat li {
+	border-bottom-color: var(--nord4);
+}
+
+table.dataTable thead .sorting:after {
+	color: var(--nord9);
+}
+
+.show-grid [class^="col-"] {
+	background-color: var(--nord8) !important;
+}
+
+/* all panel colours here... */
+
+.timeline:before {
+	background-color: var(--nord10);
+}
+
+.timeline > li > .timeline-panel {
+	border-color: var(--nord9);
+}
+
+/* more timeline colours here */
+
+/* My own stuff */
 
 #map {
 	width: 100%;
 	height: 512px;
-	border: 1px solid #ccc;
+	border: 1px solid /* #ccc */ var(--nord4);
 	margin-top: 10px;
 	margin-bottom: 10px;
 }
