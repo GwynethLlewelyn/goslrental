@@ -16,7 +16,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"runtime"
-	"time"
+//	"time"
 	"syscall"
 )
 
@@ -50,19 +50,22 @@ func setUp(db *sql.DB) error {
 		return err
 	}
 	_, err = tx.Exec(`
-	CREATE TABLE IF NOT EXISTS note (
-	  id INT NOT NULL
-	  ,title STRING
-	  ,body STRING
-	  ,created_at STRING
-	  ,updated_at STRING
+	CREATE TABLE IF NOT EXISTS Objects (
+		UUID STRING NOT NULL,
+		Name STRING NOT NULL,
+		OwnerKey STRING NOT NULL,
+		OwnerName STRING,
+		PermURL STRING,
+		Location STRING,
+		Position STRING,
+		Rotation STRING,
+		Velocity STRING,
+		LastUpdate STRING
 	);
+	CREATE UNIQUE INDEX IF NOT EXISTS ObjectsUUID ON Objects (UUID);
+	CREATE TABLE IF NOT EXISTS Users (Email STRING NOT NULL, Password STRING NOT NULL);
+	CREATE UNIQUE INDEX IF NOT EXISTS UsersEmail ON Users (Email);
 	`)
-	if err != nil {
-		return err
-	}
-	_, err = tx.Exec(`CREATE TABLE IF NOT EXISTS Users (Email STRING NOT NULL, Password STRING);
-	CREATE UNIQUE INDEX IF NOT EXISTS UsersEmail ON Users (Email);`)
 	if err != nil {
 		return err
 	}
@@ -283,23 +286,6 @@ func main() {
 		log.Fatalf("failed to ping db: %s", err)
 	}
 	
-	// now insert some stuff and read from the database.
-	tx, err := db.Begin()
-	checkErr(err)
-	
-	stmt, err := tx.Prepare("INSERT INTO note (id, title, body, created_at, updated_at) VALUES (?1,?2,?3,?4,?5)");
-	checkErrPanic(err)
-
-	defer stmt.Close()
-	
-	curTime := fmt.Sprintf("%s", time.Now())
-	
-	_, err = stmt.Exec(1, "this is my note", "blah blah", curTime, curTime)
-	checkErr(err)
-
-	err = tx.Commit()	
-	checkErr(err)
-	
 	// Now prepare the web interface
 
 	// Check if path makes sense:
@@ -309,6 +295,9 @@ func main() {
 	// Load all templates
 	err = GoSLRentalTemplates.init(PathToStaticFiles + "/templates/*.tpl")
 	checkErr(err) // abort if templates are not found
+	
+	// Register in-world handlers for script calls.
+	http.HandleFunc(URLPathPrefix + "/register/",						registerObject)
 	
 	// Static files. This should be handled directly by nginx, but we include it here
 	//  for a standalone version...
