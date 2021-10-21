@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/cznic/ql"
 	"github.com/fsnotify/fsnotify"
-	"github.com/op/go-logging" // more complete package to log to different outputs; we start with file, syslog, and stderr; 
+	"github.com/op/go-logging" // more complete package to log to different outputs; we start with file, syslog, and stderr;
 	"github.com/spf13/viper" // to read config files
 	"gopkg.in/natefinch/lumberjack.v2" // rolling file logs
 	"log"
@@ -24,7 +24,7 @@ var (
 	// Default configurations, hopefully exported to other files and packages
 	// we probably should have a struct for this (or even several)
 	Host string = "localhost"
-	GoSLRentalDSN string = "goslrental.db" 
+	GoSLRentalDSN string = "goslrental.db"
 	URLPathPrefix string
 	PDO_Prefix string = "ql"
 	PathToStaticFiles string = "~/go/src/goslrental"
@@ -71,11 +71,11 @@ func setUp(db *sql.DB) error {
 	}
 	// create one user to make tests, encode password as MD5
 	pwdmd5 := fmt.Sprintf("%x", md5.Sum([]byte("onetwothree")))
-	
+
 	_, err = tx.Exec(`INSERT INTO Users (Email, Password) VALUES ("gwyneth.llewelyn@gwynethllewelyn.net", "` + pwdmd5 + `");`)
-	//if err != nil {
-	//	return err
-	//} // should fail if already inserted
+	if err != nil {
+		return err
+	} // should fail if already inserted
 	if err = tx.Commit(); err != nil {
 		return err
 	}
@@ -99,8 +99,8 @@ func loadConfiguration() {
 			path = ""	// we might get away with this as well
 		}
 		PathToStaticFiles = path
-		
-		// set this here or hell will break out later on 
+
+		// set this here or hell will break out later on
 		logFormat = logging.MustStringFormatter(`%{color}%{time:2006/01/02 15:04:05.0} %{shortfile} - %{shortfunc} ▶ %{level:.4s}%{color:reset} %{message}`)
 
 	} else {
@@ -111,7 +111,7 @@ func loadConfiguration() {
 		GoSLRentalDSN = viper.GetString("goslrental.GoSLRentalDSN"); fmt.Print(".")
 		viper.SetDefault("PDO_Prefix", "ql") // for now, nothing else will work anyway...
 		PDO_Prefix = viper.GetString("goslrental.PDO_Prefix"); fmt.Print(".")
-		viper.SetDefault("goslrental.PathToStaticFiles", "~/go/src/goslrental")
+		viper.SetDefault("goslrental.PathToStaticFiles", ".")
 		path, err := expandPath(viper.GetString("goslrental.PathToStaticFiles")); fmt.Print(".")
 		if err != nil {
 			fmt.Println("Error expanding path:", err)
@@ -185,7 +185,7 @@ func loadConfiguration() {
 		fmt.Print(".")
 		fmt.Println("read!")	// note that we might not have go-logging active as yet, so we use fmt
 	}
-	
+
 	// Setup the lumberjack rotating logger. This is because we need it for the go-logging logger when writing to files. (20170813)
 	rotatingLogger := &lumberjack.Logger{
 		 Filename:	 logFileName,	// this is an option set on the config.yaml file, eventually the others will be so, too.
@@ -241,7 +241,7 @@ func main() {
 		}
 		loadConfiguration() // I think that this needs to be here, or else, how does Viper know what to call?
 	})
-	
+
 	// prepares a special channel to look for termination signals
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGHUP, syscall.SIGUSR1, syscall.SIGUSR2, syscall.SIGCONT)
@@ -261,7 +261,7 @@ func main() {
 			 }
 		}
 	}()
-	
+
 	ql.RegisterDriver()	// this should allow us to use the 'normal' SQL Go bindings to use QL.
 
 	if (Log == nil) {
@@ -273,11 +273,12 @@ func main() {
 	Log.Info("Testing opening database connection at ", GoSLRentalDSN, "\nPath to static files is:", PathToStaticFiles)
 
 	db, err := sql.Open(PDO_Prefix, GoSLRentalDSN)
-	defer db.Close()
+	// check error before deferring db.Close()
 	if err != nil {
 		log.Fatalf("failed to open db: %s", err)
 	}
-	
+	defer db.Close()
+
 	if err = setUp(db); err != nil {
 		log.Fatalf("failed to create table: %s", err)
 	}
@@ -285,20 +286,20 @@ func main() {
 	if err = db.Ping(); err != nil {
 		log.Fatalf("failed to ping db: %s", err)
 	}
-	
+
 	// Now prepare the web interface
 
 	// Check if path makes sense:
-	
+
 	Log.Info("Path is:", PathToStaticFiles + "/templates/*.tpl", "URL Path Prefix is:", URLPathPrefix, "Path to static files is:", PathToStaticFiles)
 
 	// Load all templates
 	err = GoSLRentalTemplates.init(PathToStaticFiles + "/templates/*.tpl")
 	checkErr(err) // abort if templates are not found
-	
+
 	// Register in-world handlers for script calls.
 	http.HandleFunc(URLPathPrefix + "/register/",						registerObject)
-	
+
 	// Static files. This should be handled directly by nginx, but we include it here
 	//  for a standalone version...
 	fslib := http.FileServer(http.Dir(PathToStaticFiles + "/lib"))
@@ -312,7 +313,7 @@ func main() {
 	http.HandleFunc(URLPathPrefix + "/admin/login/",					backofficeLogin) // probably not necessary
 
 	http.HandleFunc(URLPathPrefix + "/admin/user-management/",			backofficeUserManagement)
-	
+
 	http.HandleFunc(URLPathPrefix + "/admin/lsl-register-object/",		backofficeLSLRegisterObject)
 
 	// fallthrough for admin
