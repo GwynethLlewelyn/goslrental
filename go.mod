@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/cznic/ql v1.2.0
+	github.com/dchest/uniuri v0.0.0-20200228104902-7aecb25e1fe5
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/gorilla/securecookie v1.1.1
 	github.com/heatxsink/go-gravatar v0.0.0-20141217001839-ab2bd510cd12

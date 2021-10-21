@@ -4,11 +4,6 @@ import (
 	"crypto/md5"
 	"database/sql"
 	"fmt"
-	"github.com/cznic/ql"
-	"github.com/fsnotify/fsnotify"
-	"github.com/op/go-logging" // more complete package to log to different outputs; we start with file, syslog, and stderr;
-	"github.com/spf13/viper" // to read config files
-	"gopkg.in/natefinch/lumberjack.v2" // rolling file logs
 	"log"
 	"net/http"
 	"os"
@@ -16,8 +11,16 @@ import (
 	"os/user"
 	"path/filepath"
 	"runtime"
-//	"time"
 	"syscall"
+	//	"time"
+
+
+	"github.com/cznic/ql"
+	"github.com/dchest/uniuri"
+	"github.com/fsnotify/fsnotify"
+	"github.com/op/go-logging" // more complete package to log to different outputs; we start with file, syslog, and stderr;
+	"github.com/spf13/viper" // to read config files
+	"gopkg.in/natefinch/lumberjack.v2" // rolling file logs
 )
 
 var (
@@ -27,9 +30,12 @@ var (
 	GoSLRentalDSN string = "goslrental.db"
 	URLPathPrefix string
 	PDO_Prefix string = "ql"
-	PathToStaticFiles string = "~/go/src/goslrental"
+//	PathToStaticFiles string = "~/go/src/goslrental"
+	PathToStaticFiles string = "."
 	ServerPort string = ":3333"
 	FrontEnd string
+	// If tlsCRT && tlsKEY are set, this means we should set up HTTPS (gwyneth 20211021)
+	tlsCRT, tlsKEY string = "", ""
 	LSLSignaturePIN string = "6925"
 	logFileName string = "goslrental.log"
 	logMaxSize, logMaxBackups, logMaxAge int = 500, 3, 28 // configurations for the go-logging logger
@@ -121,7 +127,9 @@ func loadConfiguration() {
 		viper.SetDefault("goslrental.ServerPort", ":3333")
 		ServerPort = viper.GetString("goslrental.ServerPort"); fmt.Print(".")
 		FrontEnd = viper.GetString("goslrental.FrontEnd"); fmt.Print(".")
-		viper.SetDefault("goslrental.LSLSignaturePIN", "9876") // better than no signature at all
+		tlsKEY = viper.GetString("goslrental.tlsKEY"); fmt.Print(".")
+		tlsCRT = viper.GetString("goslrental.tlsCRT"); fmt.Print(".")
+		viper.SetDefault("goslrental.LSLSignaturePIN", generatePIN(4)) // better than no signature at all
 		LSLSignaturePIN = viper.GetString("opensim.LSLSignaturePIN"); fmt.Print(".")
 		// logging options
 		viper.SetDefault("log.FileName", "log/goslrental.log")
@@ -225,11 +233,11 @@ func main() {
 
 	// Config viper, which reads in the configuration file every time it's needed.
 	// Note that we need some hard-coded variables for the path and config file name.
-	viper.SetConfigName("config")
-	viper.SetConfigType("toml") // just to make sure; it's the same format as OpenSimulator (or MySQL) config files
+	viper.SetConfigName("config.ini")
+	viper.SetConfigType("ini") // just to make sure; it's the same format as OpenSimulator (or MySQL) config files
+	viper.AddConfigPath(".")				// optionally look for config in the working directory
 	viper.AddConfigPath("$HOME/go/src/goslrental/") // that's how I have it
 	viper.AddConfigPath("$HOME/go/src/git.gwynethllewelyn.net/GwynethLlewelyn/goslrental/") // that's how you'll have it
-	viper.AddConfigPath(".")				// optionally look for config in the working directory
 
 	loadConfiguration() // this gets loaded always, on the first time it runs
 	viper.WatchConfig() // if the config file is changed, this is supposed to reload it (20170811)
@@ -320,7 +328,18 @@ func main() {
 	http.HandleFunc(URLPathPrefix + "/admin/",							backofficeMain)
 	http.HandleFunc(URLPathPrefix + "/",								backofficeLogin) // if not auth, then get auth
 
-	err = http.ListenAndServe(ServerPort, nil) // set listen port
+	if (tlsCRT != "" && tlsKEY != "") {
+		err = http.ListenAndServeTLS(ServerPort, tlsCRT, tlsKEY, nil) // if it works, it will never return
+		if (err != nil) {
+			log.Printf("[WARN] Could not run with TLS; either the certificate %q was not found, or the private key %q was not found, or either [maybe even both] are invalid.\n", tlsCRT, tlsKEY)
+			log.Println("[INFO] Running _without_ TLS on the usual port")
+			err = http.ListenAndServe(ServerPort, nil)
+		}
+	} else {
+		log.Println("[INFO] Running with standard HTTP on the usual port, no TLS configuration detected")
+		err = http.ListenAndServe(ServerPort, nil) // set listen port
+	}
+
 	checkErr(err) // if it can't listen to all the above, then it has to abort anyway
 
 }
@@ -354,4 +373,11 @@ func expandPath(path string) (string, error) {
 		return "", err
 	}
 	return filepath.Join(usr.HomeDir, path[1:]), nil
+}
+
+// generatePIN with `nr` digits (0-9)
+func generatePIN(nr int) string {
+	const digits = "0123456789"
+
+	return uniuri.NewLenChars(nr, []byte(digits))
 }
