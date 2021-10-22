@@ -55,7 +55,7 @@ func setUp(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(`
+	if _, err = tx.Exec(`
 	CREATE TABLE IF NOT EXISTS Objects (
 		UUID STRING NOT NULL,
 		Name STRING NOT NULL,
@@ -71,17 +71,22 @@ func setUp(db *sql.DB) error {
 	CREATE UNIQUE INDEX IF NOT EXISTS ObjectsUUID ON Objects (UUID);
 	CREATE TABLE IF NOT EXISTS Users (Email STRING NOT NULL, Password STRING NOT NULL);
 	CREATE UNIQUE INDEX IF NOT EXISTS UsersEmail ON Users (Email);
-	`)
-	if err != nil {
+	`) ; err != nil {
 		return err
 	}
 	// create one user to make tests, encode password as MD5
 	pwdmd5 := fmt.Sprintf("%x", md5.Sum([]byte("onetwothree")))
 
-	_, err = tx.Exec(`INSERT INTO Users (Email, Password) VALUES ("gwyneth.llewelyn@gwynethllewelyn.net", "` + pwdmd5 + `");`)
-	if err != nil {
+	if _, err = tx.Exec(`INSERT INTO Users (Email, Password) VALUES ("gwyneth.llewelyn@gwynethllewelyn.net", "` + pwdmd5 + `");`); err != nil {
 		return err
 	} // should fail if already inserted
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	// now remove this item, since on the next way round it will give an error if it still exists! (gwyneth 20211022)
+	if _, err = tx.Exec(`DELETE FROM Users WHERE Email="gwyneth.llewelyn@gwynethllewelyn.net"`); err != nil {
+		return err
+	}
 	if err = tx.Commit(); err != nil {
 		return err
 	}

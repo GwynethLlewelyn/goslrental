@@ -31,7 +31,7 @@ func (gt *GoSLRentalTemplatesType)init(globbedPath string) error {
 	temp, err := template.ParseGlob(globbedPath)
 	checkErr(err) // move out later, we just need it here to check what's wrong with the templates (20170706)
 	//Log.Info("Path is (inside init):", globbedPath)
-	gt.Template = *temp;
+	gt.Template = *temp
 	return err
 }
 
@@ -124,9 +124,9 @@ func getUserName(request *http.Request) (userName string) {
 func clearSession(response http.ResponseWriter) {
 	cookie := &http.Cookie{
 		Name:	"session",
-		Value:	 "",
-		Path:	 "/",
-		MaxAge: -1,
+		Value:	"",
+		Path:	"/",
+		MaxAge:	-1,
 	}
 	http.SetCookie(response, cookie)
 }

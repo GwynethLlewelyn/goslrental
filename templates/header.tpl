@@ -12,7 +12,7 @@
 
 	<!-- Google Web Fonts -->
 	<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Cantarell">
-	
+
 	<!-- Bootstrap Core CSS -->
 	<link href="/lib/startbootstrap-sb-admin-2/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 	<!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">-->
@@ -27,20 +27,20 @@
 	<!-- Custom CSS -->
 	<link href="{{.URLPathPrefix}}/lib/startbootstrap-sb-admin-2/dist/css/sb-admin-2.css" rel="stylesheet">
 
-	<!-- Morris Charts CSS 
+	<!-- Morris Charts CSS
 	<link href="{{.URLPathPrefix}}/lib/startbootstrap-sb-admin-2/vendor/morrisjs/morris.css" rel="stylesheet">
 	-->
 
 	<!-- Custom Fonts -->
 	<link href="{{.URLPathPrefix}}/lib/startbootstrap-sb-admin-2/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 	<!--<script defer src="https://use.fontawesome.com/releases/v5.0.9/js/all.js" integrity="sha384-8iPTk2s/jMVj81dnzb/iFR2sdA7u06vHJyyLlAd4snFpCl/SnyUjRrbdJsw1pGIl" crossorigin="anonymous"></script>-->
-	
+
 	{{ if .Gravatar }}
 	<!-- I have no idea if this is really needed! -->
 	<link rel="stylesheet" href="https://secure.gravatar.com/css/services.css" type="text/css">
 	<link rel="stylesheet" href="{{.URLPathPrefix}}/lib/gravatar-profile.css" type="text/css">
 	{{ end }}
-	
+
 	{{ if .LSL }}
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/themes/prism.min.css" type="text/css">
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/prism.min.js"></script>
@@ -51,12 +51,12 @@
 
 	<!-- Our own overrides -->
 	<link href="{{.URLPathPrefix}}/lib/goslrental.css" rel="stylesheet" type="text/css">
-	
+
 
 	<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
 	<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
 	<!--[if lt IE 9]>
-		<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
 		<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
 	<![endif]-->
 	<link rel="apple-touch-icon" sizes="180x180" href="/lib/images/apple-touch-icon.png">
