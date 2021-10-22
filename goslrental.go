@@ -78,17 +78,25 @@ func setUp(db *sql.DB) error {
 	pwdmd5 := fmt.Sprintf("%x", md5.Sum([]byte("onetwothree")))
 
 	if _, err = tx.Exec(`INSERT INTO Users (Email, Password) VALUES ("gwyneth.llewelyn@gwynethllewelyn.net", "` + pwdmd5 + `");`); err != nil {
-		return err
+		Log.Warningf("couldn't insert because probably this user already exists; in any case, database access worked. Error was: %q", err)
 	} // should fail if already inserted
 	if err = tx.Commit(); err != nil {
-		return err
+		if err == sql.ErrTxDone {
+			Log.Warningf("insert: transaction failure: %q", err)
+		} else {
+			Log.Warningf("couldn't insert because probably this user already exists; in any case, database access worked. Error was: %q", err)
+		}
 	}
 	// now remove this item, since on the next way round it will give an error if it still exists! (gwyneth 20211022)
 	if _, err = tx.Exec(`DELETE FROM Users WHERE Email="gwyneth.llewelyn@gwynethllewelyn.net"`); err != nil {
-		return err
+		Log.Warningf("couldn't delete this user because probably it was deleted; in any case, database access worked. Error was: %q", err)
 	}
 	if err = tx.Commit(); err != nil {
-		return err
+		if err == sql.ErrTxDone {
+			Log.Warningf("delete: transaction failure: %q", err)
+		} else {
+			Log.Warningf("couldn't delete this user because probably it was deleted; in any case, database access worked. Error was: %q", err)
+		}
 	}
 	return nil
 }
