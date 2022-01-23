@@ -11,4 +11,4 @@ For now, these instructions are minimalistic; I'll update them to actually be us
 
 Licensed under the [BSD 3-clause license](https://opensource.org/licenses/BSD-3-Clause) (you can basically do whatever you wish with this code so long as you keep the attribution).
 
-[XMPP address](xmpp:gwyneth.llewelyn@gwynethllewelyn?message)
+[XMPP address](xmpp:gwynethllewelyn@gmail.com?message)
