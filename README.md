@@ -10,3 +10,5 @@ The purpose of this package is to show how to integrate Go with Second Life/Open
 For now, these instructions are minimalistic; I'll update them to actually be useful (hopefully soon (well, not _that_ soon...)).
 
 Licensed under the [BSD 3-clause license](https://opensource.org/licenses/BSD-3-Clause) (you can basically do whatever you wish with this code so long as you keep the attribution).
+
+[XMPP address](xmpp:gwyneth.llewelyn@gwynethllewelyn?message)
